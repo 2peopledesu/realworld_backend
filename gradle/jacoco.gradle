@@ -1,0 +1,58 @@
+import java.util.stream.Collectors
+
+def excludeFromCoverage = new ArrayList<String>()
+file('coverage-exclude.asap').withInputStream() { it ->
+    excludeFromCoverage.addAll(new BufferedReader(new InputStreamReader(it))
+            .lines()
+            .parallel()
+            .map(s -> s.substring(7).strip())
+            .collect(Collectors.toList()))
+}
+
+subprojects {
+    apply plugin: 'jacoco'
+
+    jacoco {
+        toolVersion = '0.8.12'
+    }
+
+    test {
+        useJUnitPlatform()
+        finalizedBy 'jacocoTestReport'
+    }
+
+    jacocoTestReport {
+        reports {
+            html.required.set(true)
+            xml.required.set(false)
+            csv.required.set(false)
+        }
+        afterEvaluate {
+            classDirectories.setFrom(
+                    files(classDirectories.files.collect {
+                        fileTree(dir: it, excludes: Qdomains + excludeFromCoverage.stream()
+                                .map(s -> s + ".class")
+                                .collect(Collectors.toList()))
+                    })
+            )
+        }
+        finalizedBy 'jacocoTestCoverageVerification'
+    }
+
+    jacocoTestCoverageVerification {
+        violationRules {
+            rule {
+                enabled = true
+                element = "CLASS"
+                limit {
+                    counter = "LINE"
+                    value = "COVEREDRATIO"
+                    minimum = 1.00
+                }
+                excludes += excludeFromCoverage.stream()
+                        .map(s -> s.replace("/", "."))
+                        .collect(Collectors.toList())
+            }
+        }
+    }
+}
