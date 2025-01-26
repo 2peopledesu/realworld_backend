@@ -1,5 +1,6 @@
 package com.imap143.realworld.user.service;
 
+import com.imap143.realworld.user.model.Password;
 import com.imap143.realworld.user.model.User;
 import com.imap143.realworld.user.model.UserSignUpRequest;
 import com.imap143.realworld.user.repository.UserRepository;
@@ -42,4 +43,21 @@ class UserServiceTest {
         assertThat(actualUser.getUsername()).isEqualTo("testuser");
         verify(userRepository).save(any(User.class));
     }
+
+    @Test
+    void login_WithValidInput_ReturnsUser() {
+
+        User user = User.of("test@test.com", "testuser", Password.of("password", passwordEncoder));
+
+        final var PasswordEncoder = passwordEncoder;
+        given(userRepository.findByEmail("test@test.com")).willReturn(java.util.Optional.of(user));
+        given(user.matchPassword("password", PasswordEncoder)).willReturn(true);
+
+        java.util.Optional<User> actualUser = userService.login("test@test.com", "password");
+
+        assertThat(actualUser).isPresent();
+        assertThat(actualUser.get().getEmail()).isEqualTo("test@test.com");
+        assertThat(actualUser.get().getUsername()).isEqualTo("testuser");
+    }
+    
 } 

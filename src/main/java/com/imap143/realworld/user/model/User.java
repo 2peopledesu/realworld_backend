@@ -2,6 +2,7 @@ package com.imap143.realworld.user.model;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Entity
 @Table(name = "users", uniqueConstraints = {
@@ -46,4 +47,7 @@ public class User {
         return profile.getBio();
     }
 
+    public boolean matchPassword(String rawPassword, PasswordEncoder passwordEncoder) {
+        return password.matches(rawPassword, passwordEncoder);
+    }
 }

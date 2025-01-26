@@ -4,9 +4,11 @@ import com.imap143.realworld.user.model.Password;
 import com.imap143.realworld.user.model.User;
 import com.imap143.realworld.user.model.UserSignUpRequest;
 import com.imap143.realworld.user.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 public class UserService {
@@ -26,5 +28,11 @@ public class UserService {
                 userSignUpRequest.getEmail(), 
                 userSignUpRequest.getUsername(),
                 encodedPassword));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<User> login(String email, String password) {
+        return userRepository.findByEmail(email)
+                .filter(user -> user.matchPassword(password, passwordEncoder));
     }
 }
