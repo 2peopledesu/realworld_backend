@@ -35,4 +35,19 @@ public class UserService {
         return userRepository.findByEmail(email)
                 .filter(user -> user.matchPassword(password, passwordEncoder));
     }
+
+    @Transactional(readOnly = true)
+    public Optional<User> findByUsername(String username) {
+        return userRepository.findByProfile_Username(username);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<User> findById(long id) {
+        return userRepository.findById(id);
+    }
 }

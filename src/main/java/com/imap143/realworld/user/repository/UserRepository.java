@@ -9,11 +9,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     User save(User user);
 
     Optional<User> findByEmail(String email);
-    
-    /* 
-    @Query("SELECT u FROM User u WHERE u.profile.userName = :userName")
-    Optional<User> findByUserName(@Param("userName") String userName);
-    
+
+    Optional<User> findByProfile_Username(String username);
+
+    /*
     Optional<User> findByEmailAndPassword(String email, String password);
     
     @Query("SELECT u FROM User u WHERE u.profile.userName = :userName AND u.password = :password")
