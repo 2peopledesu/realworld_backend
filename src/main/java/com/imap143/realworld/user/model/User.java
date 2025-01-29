@@ -2,6 +2,8 @@ package com.imap143.realworld.user.model;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.AccessLevel;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Entity
@@ -9,11 +11,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
     @UniqueConstraint(columnNames = {"email"}),
     @UniqueConstraint(columnNames = {"username"})
 })
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User {
 
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
-    @Getter
     private long id;
 
     @Getter
@@ -24,10 +27,6 @@ public class User {
 
     @Embedded
     private Profile profile;
-
-    // It cannot be called externally, and encourage object creation through
-    // the static method instead.
-    protected User() {}
 
     // Existing user login
     public static User of(String email, String username, Password password) {
@@ -50,5 +49,34 @@ public class User {
 
     public boolean matchPassword(String rawPassword, PasswordEncoder passwordEncoder) {
         return password.matches(rawPassword, passwordEncoder);
+    }
+
+    public void update(UserUpdateRequest request, PasswordEncoder passwordEncoder) {
+        request.getEmail().ifPresent(this::updateEmail);
+        request.getUsername().ifPresent(this::updateUsername);
+        request.getBio().ifPresent(this::updateBio);
+        request.getImage().ifPresent(this::updateImage);
+        request.getPassword().ifPresent(password -> 
+            this.password = Password.of(password, passwordEncoder));
+    }
+
+    private void updateEmail(String email) {
+        if (email != null && !email.isBlank()) {
+            this.email = email;
+        }
+    }
+
+    private void updateUsername(String username) {
+        if (username != null && !username.isBlank()) {
+            this.profile.setUsername(username);
+        }
+    }
+
+    private void updateBio(String bio) {
+        this.profile.setBio(bio);
+    }
+
+    private void updateImage(String image) {
+        this.profile.setImage(image);
     }
 }
