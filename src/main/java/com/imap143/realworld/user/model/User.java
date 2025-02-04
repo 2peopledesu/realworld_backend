@@ -6,6 +6,9 @@ import lombok.NoArgsConstructor;
 import lombok.AccessLevel;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Table(name = "users", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"email"}),
@@ -28,6 +31,11 @@ public class User {
     @Embedded
     private Profile profile;
 
+    @JoinTable(name = "user_followers",
+            joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "follower_id", referencedColumnName = "id"))
+    @OneToMany
+    private Set<User> followers = new HashSet<>();
     // Existing user login
     public static User of(String email, String username, Password password) {
         return new User(email, new Profile(username), password);
