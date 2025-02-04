@@ -1,10 +1,9 @@
 package com.imap143.realworld.user.dto;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.imap143.realworld.user.model.User;
-import lombok.Value;
+import lombok.Getter;
 
 import static com.fasterxml.jackson.annotation.JsonTypeInfo.As.WRAPPER_OBJECT;
 import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
@@ -21,30 +20,31 @@ import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
 }
  */
 
+@Getter
 @JsonTypeName("user")
 @JsonTypeInfo(include = WRAPPER_OBJECT, use = NAME)
-@Value
 public class UserResponseDto {
-    String email;
-    String token;
-    String username;
-    String bio;
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    String image;
+    private final String email;
+    private final String username;
+    private final String bio;
+    private final String image;
+    private final String token;
 
-    public UserResponseDto(String email, String token, String username, String bio, String image) {
+    private UserResponseDto(String email, String username, String bio, String image, String token) {
         this.email = email;
-        this.token = token;
         this.username = username;
         this.bio = bio;
         this.image = image;
+        this.token = token;
     }
 
     public static UserResponseDto fromUser(User user, String token) {
-        return new UserResponseDto(user.getEmail(),
-                token,
-                user.getUsername(),
-                user.getBio(),
-                null);
+        return new UserResponseDto(
+            user.getEmail(),
+            user.getUsername(),
+            user.getBio(),
+            user.getProfile().getImage(),
+            token
+        );
     }
 }

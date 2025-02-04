@@ -3,12 +3,10 @@ package com.imap143.realworld.user.model;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Embeddable
-@NoArgsConstructor
 public class Profile {
     @Column(name = "username", unique = true, nullable = false)
     private String username;
@@ -26,6 +24,8 @@ public class Profile {
     public Profile(String username) {
         this(username, null, null, false);
     }
+
+    protected Profile() {}
 
     private Profile(String username, String bio, String image, boolean following) {
         this.username = username;
@@ -54,6 +54,10 @@ public class Profile {
         if (username != null && !username.isBlank()) {
             this.username = username;
         }
+    }
+
+    public void setFollowing(boolean following) {
+        this.following = following;
     }
 
 }
