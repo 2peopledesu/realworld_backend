@@ -25,7 +25,7 @@ public class ArticleContent {
     @JoinTable(name = "article_tags",
             joinColumns = @JoinColumn(name = "article_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id"))
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
     private Set<Tag> tags = new HashSet<>();
 
     public ArticleContent(String title, String description, String body, Set<Tag> tags) {
