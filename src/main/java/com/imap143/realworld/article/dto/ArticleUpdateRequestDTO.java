@@ -24,4 +24,22 @@ public class ArticleUpdateRequestDTO {
                 .body(body)
                 .build();
     }
+
+    public boolean hasChanges() {
+        return (title != null && !title.trim().isEmpty()) ||
+               (description != null && !description.trim().isEmpty()) ||
+               (body != null && !body.trim().isEmpty());
+    }
+
+    public String getTitleOrNull() {
+        return title != null && !title.trim().isEmpty() ? title.trim() : null;
+    }
+
+    public String getDescriptionOrNull() {
+        return description != null && !description.trim().isEmpty() ? description.trim() : null;
+    }
+
+    public String getBodyOrNull() {
+        return body != null && !body.trim().isEmpty() ? body.trim() : null;
+    }
 }

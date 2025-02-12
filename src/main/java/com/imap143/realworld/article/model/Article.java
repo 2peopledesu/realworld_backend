@@ -58,21 +58,16 @@ public class Article {
     }
 
     public void update(String title, String description, String body) {
-        if (title != null) {
+        if (title != null || description != null || body != null) {
             this.content = new ArticleContent(
-                title,
+                title != null ? title : this.content.getTitle(),
                 description != null ? description : this.content.getDescription(),
                 body != null ? body : this.content.getBody(),
                 this.content.getTags()
             );
-            this.slug = generateSlug();
-        } else if (description != null || body != null) {
-            this.content = new ArticleContent(
-                this.content.getTitle(),
-                description != null ? description : this.content.getDescription(),
-                body != null ? body : this.content.getBody(),
-                this.content.getTags()
-            );
+            if (title != null) {
+                this.slug = generateSlug();
+            }
         }
     }
 }

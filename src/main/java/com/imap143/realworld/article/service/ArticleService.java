@@ -4,6 +4,7 @@ import com.imap143.realworld.article.dto.ArticleUpdateRequestDTO;
 import com.imap143.realworld.article.model.Article;
 import com.imap143.realworld.article.model.ArticleContent;
 import com.imap143.realworld.article.repository.ArticleRepository;
+import com.imap143.realworld.exception.RealWorldException;
 import com.imap143.realworld.tag.service.TagService;
 import com.imap143.realworld.user.service.UserService;
 import org.springframework.stereotype.Service;
@@ -39,11 +40,23 @@ public class ArticleService {
 
     @Transactional
     public Optional<Article> update(String slug, long userId, ArticleUpdateRequestDTO request) {
-        return articleRepository.findBySlug(slug)
-                .filter(article -> article.getAuthor().getId() == userId)
-                .map(article -> {
-                    article.update(request.getTitle(), request.getDescription(), request.getBody());
-                    return article;
-                });
+        if (!request.hasChanges()) {
+            throw new RealWorldException("At least one field must be provided for update");
+        }
+
+        Article article = articleRepository.findBySlug(slug)
+                .orElseThrow(() -> new RealWorldException("Article not found"));
+
+        if (article.getAuthor().getId() != userId) {
+            throw new RealWorldException("You can only update your own articles");
+        }
+
+        article.update(
+            request.getTitleOrNull(),
+            request.getDescriptionOrNull(),
+            request.getBodyOrNull()
+        );
+        
+        return Optional.of(article);
     }
 }
