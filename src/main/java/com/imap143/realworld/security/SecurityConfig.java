@@ -45,8 +45,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/users", "/users/login").permitAll()
-                        .requestMatchers("/profiles/**").permitAll()
-                        .requestMatchers("/articles").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/profiles/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/articles/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/tags/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()))

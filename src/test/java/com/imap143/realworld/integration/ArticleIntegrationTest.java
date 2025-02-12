@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Set;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -31,42 +32,53 @@ class ArticleIntegrationTest {
     private ObjectMapper objectMapper;
 
     @Test
-    void articleWorkflow() throws Exception {
+    void createAndGetArticle() throws Exception {
         // 1. Create a user
-        UserSignUpRequestDto signUpRequest = new UserSignUpRequestDto(
-            "author@test.com", "author", "password");
-        
+        UserSignUpRequestDto signUpRequest = new UserSignUpRequestDto("author@test.com", "author", "password123");
         String signUpResponse = mockMvc.perform(post("/users")
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(signUpRequest)))
                 .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
         String token = extractToken(signUpResponse);
 
         // 2. Create an article
         Set<Tag> tags = Set.of(new Tag("dragons"), new Tag("training"));
         ArticlePostRequestDTO articleRequest = new ArticlePostRequestDTO(
-            "How to train your dragon",
-            "Ever wonder how?",
-            "It takes a Jacobian",
-            tags
+                "How to train your dragon",
+                "Ever wonder how?",
+                "It takes a Jacobian",
+                tags
         );
 
         mockMvc.perform(post("/articles")
-            .with(csrf())
-            .header("Authorization", "Token " + token)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(articleRequest)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.article.title").value("How to train your dragon"))
-            .andExpect(jsonPath("$.article.description").value("Ever wonder how?"))
-            .andExpect(jsonPath("$.article.body").value("It takes a Jacobian"))
-            .andExpect(jsonPath("$.article.tags").isArray())
-            .andExpect(jsonPath("$.article.tags[0]").exists())
-            .andExpect(jsonPath("$.article.author.username").value("author"))
-            .andExpect(jsonPath("$.article.favoritesCount").isNumber());
+                .with(csrf())
+                .header("Authorization", "Token " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(articleRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.article.title").value("How to train your dragon"))
+                .andExpect(jsonPath("$.article.description").value("Ever wonder how?"))
+                .andExpect(jsonPath("$.article.body").value("It takes a Jacobian"))
+                .andExpect(jsonPath("$.article.tags").isArray())
+                .andExpect(jsonPath("$.article.tags[0]").exists())
+                .andExpect(jsonPath("$.article.author.username").value("author"))
+                .andExpect(jsonPath("$.article.favoritesCount").isNumber());
+
+        // 3. Get the article
+        mockMvc.perform(get("/articles/how-to-train-your-dragon"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.article.slug").value("how-to-train-your-dragon"))
+                .andExpect(jsonPath("$.article.title").value("How to train your dragon"))
+                .andExpect(jsonPath("$.article.description").value("Ever wonder how?"))
+                .andExpect(jsonPath("$.article.body").value("It takes a Jacobian"))
+                .andExpect(jsonPath("$.article.tags").isArray())
+                .andExpect(jsonPath("$.article.author.username").value("author"))
+                .andExpect(jsonPath("$.article.author.following").value(false));
     }
 
     private String extractToken(String response) {

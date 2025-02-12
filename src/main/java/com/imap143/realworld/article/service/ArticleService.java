@@ -8,6 +8,8 @@ import com.imap143.realworld.user.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 public class ArticleService {
     private final UserService userService;
@@ -27,5 +29,10 @@ public class ArticleService {
         return userService.findById(AuthorId)
                 .map(user -> articleRepository.save(new Article(user, articleContent)))
                 .orElseThrow();
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Article> findBySlug(String slug) {
+        return Optional.of(articleRepository.findBySlug(slug).orElseThrow());
     }
 }
