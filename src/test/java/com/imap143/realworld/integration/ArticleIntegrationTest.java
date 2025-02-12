@@ -19,6 +19,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -192,6 +193,55 @@ class ArticleIntegrationTest {
                 .andExpect(jsonPath("$.article.title").value("How to train your dragon"))
                 .andExpect(jsonPath("$.article.description").value("Updated description"))
                 .andExpect(jsonPath("$.article.body").value("It takes a Jacobian"));
+    }
+
+    @Test
+    void deleteArticle() throws Exception {
+        // 1. Register a user
+        UserSignUpRequestDto signUpRequest = new UserSignUpRequestDto("author@test.com", "author", "password123");
+        String signUpResponse = mockMvc.perform(post("/users")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(signUpRequest)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String token = extractToken(signUpResponse);
+
+        // 2. Create an article
+        Set<Tag> tags = Set.of(new Tag("dragons"), new Tag("training"));
+        ArticlePostRequestDTO createRequest = new ArticlePostRequestDTO(
+                "How to train your dragon",
+                "Ever wonder how?",
+                "It takes a Jacobian",
+                tags
+        );
+
+        mockMvc.perform(post("/articles")
+                .with(csrf())
+                .header("Authorization", "Token " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isOk());
+
+        // 3. Delete the article
+        mockMvc.perform(delete("/articles/how-to-train-your-dragon")
+                .with(csrf())
+                .header("Authorization", "Token " + token))
+                .andExpect(status().isNoContent());
+
+        // 4. Try to get the article
+        mockMvc.perform(get("/articles/how-to-train-your-dragon"))
+                .andExpect(status().isNotFound());
+
+        // 5. Try to delete the article again
+        mockMvc.perform(delete("/articles/non-existent-article")
+                .with(csrf())
+                .header("Authorization", "Token " + token))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Article not found"));
     }
 
     private String extractToken(String response) {

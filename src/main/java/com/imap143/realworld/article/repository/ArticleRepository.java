@@ -9,4 +9,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ArticleRepository extends JpaRepository<Article, Long> {
     Article save(Article article);
     Optional<Article> findBySlug(String slug);
+    void deleteArticleBySlug(String slug);
 }

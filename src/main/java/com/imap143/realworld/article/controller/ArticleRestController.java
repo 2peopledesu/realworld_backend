@@ -31,7 +31,7 @@ public class ArticleRestController {
     public ResponseEntity<ArticleResponseDTO> getArticle(@PathVariable String slug) {
         return articleService.findBySlug(slug)
                 .map(article -> ResponseEntity.ok(new ArticleResponseDTO(article, article.getAuthor().getProfile())))
-                .orElse(ResponseEntity.notFound().build());
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PutMapping(value = "/articles/{slug}")
@@ -42,6 +42,14 @@ public class ArticleRestController {
         return articleService.update(slug, userDetails.getId(), request)
                 .map(article -> ResponseEntity.ok(new ArticleResponseDTO(article, article.getAuthor().getProfile())))
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping(value = "/articles/{slug}")
+    public ResponseEntity<Void> deleteArticle(
+            @PathVariable String slug,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        articleService.delete(slug, userDetails.getId());
+        return ResponseEntity.noContent().build();
     }
 
     @ExceptionHandler(RealWorldException.class)

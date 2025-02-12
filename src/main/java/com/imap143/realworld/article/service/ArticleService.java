@@ -35,7 +35,7 @@ public class ArticleService {
 
     @Transactional(readOnly = true)
     public Optional<Article> findBySlug(String slug) {
-        return Optional.of(articleRepository.findBySlug(slug).orElseThrow());
+        return articleRepository.findBySlug(slug);
     }
 
     @Transactional
@@ -58,5 +58,17 @@ public class ArticleService {
         );
         
         return Optional.of(article);
+    }
+
+    @Transactional
+    public void delete(String slug, long userId) {
+        Article article = articleRepository.findBySlug(slug)
+                .orElseThrow(() -> new RealWorldException("Article not found"));
+
+        if (article.getAuthor().getId() != userId) {
+            throw new RealWorldException("You can only delete your own articles");
+        }
+
+        articleRepository.delete(article);
     }
 }
