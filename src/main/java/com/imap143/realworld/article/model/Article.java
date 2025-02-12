@@ -56,4 +56,23 @@ public class Article {
                 .replaceAll("\\s+", "-")
                 .replaceAll("[^a-z0-9-]", "");
     }
+
+    public void update(String title, String description, String body) {
+        if (title != null) {
+            this.content = new ArticleContent(
+                title,
+                description != null ? description : this.content.getDescription(),
+                body != null ? body : this.content.getBody(),
+                this.content.getTags()
+            );
+            this.slug = generateSlug();
+        } else if (description != null || body != null) {
+            this.content = new ArticleContent(
+                this.content.getTitle(),
+                description != null ? description : this.content.getDescription(),
+                body != null ? body : this.content.getBody(),
+                this.content.getTags()
+            );
+        }
+    }
 }

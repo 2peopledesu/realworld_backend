@@ -1,5 +1,6 @@
 package com.imap143.realworld.article.service;
 
+import com.imap143.realworld.article.dto.ArticleUpdateRequestDTO;
 import com.imap143.realworld.article.model.Article;
 import com.imap143.realworld.article.model.ArticleContent;
 import com.imap143.realworld.article.repository.ArticleRepository;
@@ -34,5 +35,15 @@ public class ArticleService {
     @Transactional(readOnly = true)
     public Optional<Article> findBySlug(String slug) {
         return Optional.of(articleRepository.findBySlug(slug).orElseThrow());
+    }
+
+    @Transactional
+    public Optional<Article> update(String slug, long userId, ArticleUpdateRequestDTO request) {
+        return articleRepository.findBySlug(slug)
+                .filter(article -> article.getAuthor().getId() == userId)
+                .map(article -> {
+                    article.update(request.getTitle(), request.getDescription(), request.getBody());
+                    return article;
+                });
     }
 }
