@@ -3,6 +3,7 @@ package com.imap143.realworld.integration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.imap143.realworld.article.dto.ArticlePostRequestDTO;
 import com.imap143.realworld.article.dto.ArticleUpdateRequestDTO;
+import com.imap143.realworld.article.dto.CommentPostRequestDTO;
 import com.imap143.realworld.tag.model.Tag;
 import com.imap143.realworld.user.dto.UserSignUpRequestDto;
 import org.junit.jupiter.api.Test;
@@ -242,6 +243,50 @@ class ArticleIntegrationTest {
                 .header("Authorization", "Token " + token))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Article not found"));
+    }
+
+    @Test
+    void createComment() throws Exception {
+        // 1. Create a user
+        UserSignUpRequestDto signUpRequest = new UserSignUpRequestDto("author@test.com", "author", "password123");
+        String signUpResponse = mockMvc.perform(post("/users")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(signUpRequest)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String token = extractToken(signUpResponse);
+
+        // 2. Create an article
+        Set<Tag> tags = Set.of(new Tag("dragons"), new Tag("training"));
+        ArticlePostRequestDTO createRequest = new ArticlePostRequestDTO(
+                "How to train your dragon",
+                "Ever wonder how?",
+                "It takes a Jacobian",
+                tags
+        );
+
+        mockMvc.perform(post("/articles")
+                .with(csrf())
+                .header("Authorization", "Token " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isOk());
+
+        // 3. Create a comment
+        CommentPostRequestDTO commentRequest = new CommentPostRequestDTO("Great article!");
+        
+        mockMvc.perform(post("/articles/how-to-train-your-dragon/comments")
+                .with(csrf())
+                .header("Authorization", "Token " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(commentRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.comment.body").value("Great article!"))
+                .andExpect(jsonPath("$.comment.author.username").value("author"));
     }
 
     private String extractToken(String response) {

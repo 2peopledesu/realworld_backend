@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.AccessLevel;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Table(name = "articles")
 @Entity
@@ -39,6 +41,9 @@ public class Article {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @OneToMany(mappedBy = "article", cascade = CascadeType.ALL)
+    private final Set<Comment> comments = new HashSet<>();
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -69,5 +74,9 @@ public class Article {
                 this.slug = generateSlug();
             }
         }
+    }
+    
+    public void addComment(Comment comment) {
+        comments.add(comment);
     }
 }
