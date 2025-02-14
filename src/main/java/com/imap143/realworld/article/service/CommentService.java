@@ -2,6 +2,7 @@ package com.imap143.realworld.article.service;
 
 import com.imap143.realworld.article.model.Comment;
 import com.imap143.realworld.user.model.User;
+import com.imap143.realworld.user.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,10 +16,13 @@ import com.imap143.realworld.exception.RealWorldException;
 public class CommentService {
     private final ArticleRepository articleRepository;
     private final CommentRepository commentRepository;
+    private final UserService userService;
 
-    public CommentService(ArticleRepository articleRepository, CommentRepository commentRepository) {
+    public CommentService(ArticleRepository articleRepository, CommentRepository commentRepository, UserService userService) {
         this.articleRepository = articleRepository;
         this.commentRepository = commentRepository;
+        this.userService = userService;
+
     }
 
     @Transactional
@@ -30,5 +34,19 @@ public class CommentService {
         article.addComment(comment);
         
         return commentRepository.save(comment);
+    }
+
+    @Transactional
+    public void deleteComment(Long commentId, Long userId) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new RealWorldException("Comment not found"));
+
+        if (comment.getAuthor().getId() != (userId)) {
+            throw new RealWorldException("Only comment author can delete the comment");
+        }
+
+        Article article = comment.getArticle();
+        article.removeComment(comment);
+        commentRepository.delete(comment);
     }
 }

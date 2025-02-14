@@ -4,14 +4,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.imap143.realworld.article.dto.ArticlePostRequestDTO;
 import com.imap143.realworld.article.dto.ArticleUpdateRequestDTO;
 import com.imap143.realworld.article.dto.CommentPostRequestDTO;
+import com.imap143.realworld.exception.RealWorldException;
 import com.imap143.realworld.tag.model.Tag;
 import com.imap143.realworld.user.dto.UserSignUpRequestDto;
+import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
@@ -24,6 +27,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -287,6 +292,132 @@ class ArticleIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.comment.body").value("Great article!"))
                 .andExpect(jsonPath("$.comment.author.username").value("author"));
+    }
+
+    @Test
+    void deleteComment() throws Exception {
+        // 1. Register user and get token
+        UserSignUpRequestDto signUpRequest = new UserSignUpRequestDto("author@test.com", "author", "password123");
+        String signUpResponse = mockMvc.perform(post("/users")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(signUpRequest)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String token = JsonPath.read(signUpResponse, "$.user.token");
+
+        // 2. Create article
+        Set<Tag> tags = Set.of(new Tag("dragons"), new Tag("training"));
+        ArticlePostRequestDTO articleRequest = new ArticlePostRequestDTO(
+                "How to train your dragon",
+                "Ever wonder how?",
+                "It takes a Jacobian",
+                tags
+        );
+
+        mockMvc.perform(post("/articles")
+                .with(csrf())
+                .header("Authorization", "Token " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(articleRequest)))
+                .andExpect(status().isOk());
+
+        // 3. Create comment
+        CommentPostRequestDTO commentRequest = new CommentPostRequestDTO("Great article!");
+        
+        MvcResult result = mockMvc.perform(post("/articles/how-to-train-your-dragon/comments")
+                .with(csrf())
+                .header("Authorization", "Token " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(commentRequest)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        // Extract comment ID from response
+        String responseBody = result.getResponse().getContentAsString();
+        Number commentIdNum = JsonPath.read(responseBody, "$.comment.id");
+        Long commentId = commentIdNum.longValue();  // Convert Number to Long
+
+        // 4. Delete comment
+        mockMvc.perform(delete("/articles/comments/" + commentId)
+                .with(csrf())
+                .header("Authorization", "Token " + token))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void deleteComment_NotAuthor() throws Exception {
+        // 1. Register author and get token
+        UserSignUpRequestDto authorSignUp = new UserSignUpRequestDto("author@test.com", "author", "password123");
+        String authorResponse = mockMvc.perform(post("/users")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(authorSignUp)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String authorToken = JsonPath.read(authorResponse, "$.user.token");
+
+        // 2. Register another user
+        UserSignUpRequestDto otherSignUp = new UserSignUpRequestDto("other@test.com", "other", "password123");
+        String otherResponse = mockMvc.perform(post("/users")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(otherSignUp)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String otherToken = JsonPath.read(otherResponse, "$.user.token");
+
+        // 3. Create article
+        Set<Tag> tags = Set.of(new Tag("dragons"), new Tag("training"));
+        ArticlePostRequestDTO articleRequest = new ArticlePostRequestDTO(
+                "How to train your dragon",
+                "Ever wonder how?",
+                "It takes a Jacobian",
+                tags
+        );
+
+        mockMvc.perform(post("/articles")
+                .with(csrf())
+                .header("Authorization", "Token " + authorToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(articleRequest)))
+                .andExpect(status().isOk());
+
+        // 4. Create comment
+        CommentPostRequestDTO commentRequest = new CommentPostRequestDTO("Great article!");
+        
+        MvcResult result = mockMvc.perform(post("/articles/how-to-train-your-dragon/comments")
+                .with(csrf())
+                .header("Authorization", "Token " + authorToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(commentRequest)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        // Extract comment ID
+        String responseBody = result.getResponse().getContentAsString();
+        Number commentIdNum = JsonPath.read(responseBody, "$.comment.id");
+        Long commentId = commentIdNum.longValue();
+
+        // 5. Try to delete comment with different user - expect 403 Forbidden
+        mockMvc.perform(delete("/articles/comments/" + commentId)
+                .with(csrf())
+                .header("Authorization", "Token " + otherToken))
+                .andExpect(status().isForbidden())
+                .andExpect(resultActions -> {
+                    assertTrue(resultActions.getResolvedException() instanceof RealWorldException);
+                    assertEquals("Only comment author can delete the comment", 
+                        resultActions.getResolvedException().getMessage());
+                });
     }
 
     private String extractToken(String response) {

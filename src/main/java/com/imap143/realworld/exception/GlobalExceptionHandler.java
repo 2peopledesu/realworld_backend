@@ -20,5 +20,12 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(ex.getMessage()));
     }
 
+    @ExceptionHandler(RealWorldException.class)
+    public ResponseEntity<String> handleRealWorldException(RealWorldException e) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(e.getMessage());
+    }
+
     private record ErrorResponse(String message) {}
 } 
