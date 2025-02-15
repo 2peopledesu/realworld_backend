@@ -1,5 +1,6 @@
 package com.imap143.realworld.user.model;
 
+import com.imap143.realworld.article.model.Article;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -36,6 +37,13 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "follower_id", referencedColumnName = "id"))
     @OneToMany
     private Set<User> followers = new HashSet<>();
+
+    @ManyToMany
+    @JoinTable(name = "user_favorites",
+            joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "article_id", referencedColumnName = "id"))
+    private Set<Article> favoritedArticles = new HashSet<>();
+
     // Existing user login
     public static User of(String email, String username, Password password) {
         return new User(email, new Profile(username), password);
@@ -87,4 +95,16 @@ public class User {
     private void updateImage(String image) {
         this.profile.setImage(image);
     }
+
+    public Article addFavorite(Article article) {
+        favoritedArticles.add(article);
+        return article.addFavorite(this);
+    }
+
+    public Article removeFavorite(Article article) {
+        favoritedArticles.remove(article);
+        return article.removeFavorite(this);
+    }
+    
 }
+
