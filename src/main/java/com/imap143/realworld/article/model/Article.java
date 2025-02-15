@@ -44,6 +44,14 @@ public class Article {
     @OneToMany(mappedBy = "article", cascade = CascadeType.ALL)
     private final Set<Comment> comments = new HashSet<>();
 
+    @ManyToMany
+    @JoinTable(
+            name = "article_favorites",
+            joinColumns = @JoinColumn(name = "article_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> favoritedBy = new HashSet<>();
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -65,22 +73,40 @@ public class Article {
     public void update(String title, String description, String body) {
         if (title != null || description != null || body != null) {
             this.content = new ArticleContent(
-                title != null ? title : this.content.getTitle(),
-                description != null ? description : this.content.getDescription(),
-                body != null ? body : this.content.getBody(),
-                this.content.getTags()
+                    title != null ? title : this.content.getTitle(),
+                    description != null ? description : this.content.getDescription(),
+                    body != null ? body : this.content.getBody(),
+                    this.content.getTags()
             );
             if (title != null) {
                 this.slug = generateSlug();
             }
         }
     }
-    
+
     public void addComment(Comment comment) {
         comments.add(comment);
     }
 
     public void removeComment(Comment comment) {
         comments.remove(comment);
+    }
+
+    public Article addFavorite(User user) {
+        this.favoritedBy.add(user);
+        return this;
+    }
+
+    public Article removeFavorite(User user) {
+        this.favoritedBy.remove(user);
+        return this;
+    }
+
+    public boolean isFavoritedBy(User user) {
+        return this.favoritedBy.contains(user);
+    }
+
+    public int getFavoritesCount() {
+        return this.favoritedBy.size();
     }
 }
