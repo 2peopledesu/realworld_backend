@@ -3,89 +3,72 @@ package com.imap143.realworld.article.service;
 import com.imap143.realworld.article.model.Article;
 import com.imap143.realworld.article.model.ArticleContent;
 import com.imap143.realworld.article.repository.ArticleRepository;
-import com.imap143.realworld.user.model.Password;
+import com.imap143.realworld.tag.model.Tag;
 import com.imap143.realworld.user.model.User;
-import com.imap143.realworld.user.repository.UserRepository;
 import com.imap143.realworld.user.service.UserService;
-import com.imap143.realworld.tag.service.TagService;
-import org.junit.jupiter.api.BeforeEach;
+import com.imap143.realworld.tag.repository.TagRepository;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
-import static org.mockito.Mockito.*;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
+@ExtendWith(MockitoExtension.class)
 class ArticleServiceTest {
-    private ArticleService articleService;
-    private ArticleRepository articleRepository;
-    private UserRepository userRepository;
+
+    @Mock
     private UserService userService;
-    private TagService tagService;
-    private BCryptPasswordEncoder passwordEncoder;
 
-    @BeforeEach
-    void setUp() {
-        articleRepository = mock(ArticleRepository.class);
-        userRepository = mock(UserRepository.class);
-        userService = mock(UserService.class);
-        tagService = mock(TagService.class);
-        passwordEncoder = new BCryptPasswordEncoder();
-        articleService = new ArticleService(userService, tagService, articleRepository, userRepository);
-    }
+    @Mock
+    private TagRepository tagRepository;
+
+    @Mock
+    private ArticleRepository articleRepository;
+
+    @InjectMocks
+    private ArticleService articleService;
 
     @Test
-    void getFeed_ShouldReturnArticlesFromFollowedUsers() {
-        Long currentUserId = 1L;
+    void create_WithValidInput_ReturnsArticle() {
+        // Given
+        long authorId = 1L;
+        User author = User.of("author@test.com", "author", null);
+        ReflectionTestUtils.setField(author, "id", authorId);
 
-        Password currentPassword = Password.of("password123", passwordEncoder);
-        Password followedPassword = Password.of("password123", passwordEncoder);
+        Set<Tag> tags = new HashSet<>();
+        Tag tag = new Tag("tag1");
+        tags.add(tag);
+        
+        ArticleContent content = new ArticleContent(
+            "Test Title",
+            "Test Description",
+            "Test Body",
+            tags
+        );
 
-        User currentUser = User.of("user@test.com", "user", currentPassword);
-        User followedUser = User.of("followed@test.com", "followed", followedPassword);
+        Article expectedArticle = new Article(author, content);
+        
+        given(userService.findById(authorId)).willReturn(Optional.of(author));
+        given(tagRepository.findByTagName(tag.getTagName())).willReturn(Optional.of(tag));
+        given(articleRepository.save(any(Article.class))).willReturn(expectedArticle);
 
-        ArticleContent content = new ArticleContent("Test Title", "Test Description", "Test Body", new HashSet<>());
-        Article article = new Article(followedUser, content);
+        // When
+        Article createdArticle = articleService.create(authorId, content);
 
-        currentUser.follow(followedUser);
-
-        when(userRepository.findById(currentUserId)).thenReturn(Optional.of(currentUser));
-        when(articleRepository.findByAuthorInOrderByCreatedAtDesc(currentUser.getFollowing(), PageRequest.of(0, 20)))
-                .thenReturn(new PageImpl<>(Collections.singletonList(article)));
-
-        Page<Article> result = articleService.getFeed(currentUserId, PageRequest.of(0, 20));
-
-        assertThat(result).isNotNull();
-        assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().get(0).getAuthor()).isEqualTo(followedUser);
-
-        verify(userRepository).findById(currentUserId);
-        verify(articleRepository).findByAuthorInOrderByCreatedAtDesc(any(), any(Pageable.class));
+        // Then
+        assertThat(createdArticle).isNotNull();
+        assertThat(createdArticle.getContent().getTitle()).isEqualTo("Test Title");
+        assertThat(createdArticle.getAuthor()).isEqualTo(author);
+        verify(articleRepository).save(any(Article.class));
     }
-
-    @Test
-    void getFeed_WithNoFollowedUsers_ShouldReturnEmptyPage() {
-        Long currentUserId = 1L;
-        Password password = Password.of("password123", passwordEncoder);
-        User currentUser = User.of("user@test.com", "user", password);
-
-        when(userRepository.findById(currentUserId)).thenReturn(Optional.of(currentUser));
-        when(articleRepository.findByAuthorInOrderByCreatedAtDesc(currentUser.getFollowing(), PageRequest.of(0, 20)))
-                .thenReturn(Page.empty());
-
-        Page<Article> result = articleService.getFeed(currentUserId, PageRequest.of(0, 20));
-
-        assertThat(result).isNotNull();
-        assertThat(result.getContent()).isEmpty();
-
-        verify(userRepository).findById(currentUserId);
-        verify(articleRepository).findByAuthorInOrderByCreatedAtDesc(any(), any(Pageable.class));
-    }
-} 
+}

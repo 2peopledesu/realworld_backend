@@ -19,10 +19,9 @@ public class ProfileController {
     @GetMapping("/profiles/{username}")
     public ResponseEntity<ProfileResponseDto> getProfile(
             @PathVariable String username) {
-        return ResponseEntity.ok(new ProfileResponseDto(
-            profileService.viewProfile(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Profile not found"))
-        ));
+        return profileService.viewProfile(username)
+                .map(profile -> ResponseEntity.ok(new ProfileResponseDto(profile)))
+                .orElseThrow(() -> new ResourceNotFoundException("Profile not found"));
     }
 
     @PutMapping("/profiles/{username}/follow")

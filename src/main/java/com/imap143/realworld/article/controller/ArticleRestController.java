@@ -56,7 +56,6 @@ public class ArticleRestController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(defaultValue = "20") int limit,
             @RequestParam(defaultValue = "0") int offset) {
-
         Pageable pageable = PageRequest.of(offset/limit, limit);
         return MultiArticleResponseDTO.of(
                 articleService.getFeed(userDetails.getId(), pageable)

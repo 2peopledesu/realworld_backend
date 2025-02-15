@@ -22,10 +22,14 @@ public class ArticleContent {
     @Column(nullable = false)
     private String body;
 
-    @JoinTable(name = "article_tags",
-            joinColumns = @JoinColumn(name = "article_id"),
-            inverseJoinColumns = @JoinColumn(name = "tag_id"))
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
+    @ManyToMany
+    @JoinTable(
+        name = "article_tags",
+        joinColumns = @JoinColumn(name = "article_id"),
+        inverseJoinColumns = @JoinColumn(name = "tag_id"),
+        foreignKey = @ForeignKey(name = "fk_article_tags"),
+        inverseForeignKey = @ForeignKey(name = "fk_tag_articles")
+    )
     private Set<Tag> tags = new HashSet<>();
 
     public ArticleContent(String title, String description, String body, Set<Tag> tags) {
