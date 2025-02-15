@@ -32,11 +32,14 @@ public class User {
     @Embedded
     private Profile profile;
 
+    @ManyToMany
     @JoinTable(name = "user_followers",
             joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "follower_id", referencedColumnName = "id"))
-    @OneToMany
     private Set<User> followers = new HashSet<>();
+
+    @ManyToMany(mappedBy = "followers")
+    private Set<User> following = new HashSet<>();
 
     @ManyToMany
     @JoinTable(name = "user_favorites",
@@ -104,6 +107,18 @@ public class User {
     public Article removeFavorite(Article article) {
         favoritedArticles.remove(article);
         return article.removeFavorite(this);
+    }
+
+    public User follow(User user) {
+        following.add(user);
+        user.getFollowers().add(this);
+        return this;
+    }
+
+    public User unfollow(User user) {
+        following.remove(user);
+        user.getFollowers().remove(this);
+        return this;
     }
 
 }

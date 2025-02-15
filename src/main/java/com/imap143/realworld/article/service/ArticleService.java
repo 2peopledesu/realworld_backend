@@ -130,4 +130,12 @@ public class ArticleService {
 
         articleRepository.delete(article);
     }
+
+    @Transactional(readOnly = true)
+    public Page<Article> getFeed(Long userId, Pageable pageable) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RealWorldException("User not found"));
+
+        return articleRepository.findByAuthorInOrderByCreatedAtDesc(user.getFollowing(), pageable);
+    }
 }

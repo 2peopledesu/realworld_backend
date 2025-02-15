@@ -1,12 +1,14 @@
 package com.imap143.realworld.article.repository;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.imap143.realworld.article.model.Article;
+import com.imap143.realworld.user.model.User;
 
 public interface ArticleRepository extends JpaRepository<Article, Long> {
     Article save(Article article);
@@ -18,4 +20,6 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
     Page<Article> findByAuthor_Profile_Username(String username, Pageable pageable);
 
     Page<Article> findByFavoritedBy_Profile_Username(String username, Pageable pageable);
+
+    Page<Article> findByAuthorInOrderByCreatedAtDesc(Set<User> authors, Pageable pageable);
 }
