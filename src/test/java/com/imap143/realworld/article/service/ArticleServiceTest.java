@@ -4,9 +4,9 @@ import com.imap143.realworld.article.model.Article;
 import com.imap143.realworld.article.model.ArticleContent;
 import com.imap143.realworld.article.repository.ArticleRepository;
 import com.imap143.realworld.tag.model.Tag;
-import com.imap143.realworld.tag.service.TagService;
 import com.imap143.realworld.user.model.User;
 import com.imap143.realworld.user.service.UserService;
+import com.imap143.realworld.tag.repository.TagRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,7 +30,7 @@ class ArticleServiceTest {
     private UserService userService;
 
     @Mock
-    private TagService tagService;
+    private TagRepository tagRepository;  // TagRepository Mock 추가
 
     @Mock
     private ArticleRepository articleRepository;
@@ -46,7 +46,8 @@ class ArticleServiceTest {
         ReflectionTestUtils.setField(author, "id", authorId);
 
         Set<Tag> tags = new HashSet<>();
-        tags.add(new Tag("tag1"));
+        Tag tag = new Tag("tag1");
+        tags.add(tag);
         
         ArticleContent content = new ArticleContent(
             "Test Title",
@@ -58,7 +59,7 @@ class ArticleServiceTest {
         Article expectedArticle = new Article(author, content);
         
         given(userService.findById(authorId)).willReturn(Optional.of(author));
-        given(tagService.refreshTagsIfExists(any())).willReturn(tags);
+        given(tagRepository.findByTagName(tag.getTagName())).willReturn(Optional.of(tag));  // TagRepository mock 동작 추가
         given(articleRepository.save(any(Article.class))).willReturn(expectedArticle);
 
         // When
@@ -70,4 +71,4 @@ class ArticleServiceTest {
         assertThat(createdArticle.getAuthor()).isEqualTo(author);
         verify(articleRepository).save(any(Article.class));
     }
-} 
+}
