@@ -43,10 +43,10 @@ public class SingleArticleResponseDTO {
                 .collect(Collectors.toSet());
         this.createdAt = article.getCreatedAt();
         this.updatedAt = article.getUpdatedAt();
-        this.favorited = currentUserId != null && 
+        this.favorited = currentUserId != null &&
                 article.getFavoritedBy().stream()
                         .anyMatch(user -> user.getId() == (currentUserId));
         this.favoritesCount = article.getFavoritesCount();
         this.author = new ArticleResponseDTO.AuthorDTO(authorProfile);
     }
-} 
+}

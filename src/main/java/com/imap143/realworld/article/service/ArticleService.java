@@ -69,14 +69,14 @@ public class ArticleService {
     public Article addFavorite(String slug, Long userId) {
         Article article = findBySlug(slug)
                 .orElseThrow(() -> new RealWorldException("Article not found"));
-        
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RealWorldException("User not found"));
-        
+
         if (article.getFavoritedBy().stream().anyMatch(u -> u.getId() == (userId))) {
             throw new RealWorldException("Article is already favorited");
         }
-        
+
         article.addFavorite(user);
         return articleRepository.save(article);
     }
@@ -85,14 +85,14 @@ public class ArticleService {
     public Article unFavorite(String slug, Long userId) {
         Article article = findBySlug(slug)
                 .orElseThrow(() -> new RealWorldException("Article not found"));
-        
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RealWorldException("User not found"));
-        
+
         if (article.getFavoritedBy().stream().noneMatch(u -> u.getId() == (userId))) {
             throw new RealWorldException("Article is not favorited yet");
         }
-        
+
         article.removeFavorite(user);
         return articleRepository.save(article);
     }
@@ -111,11 +111,11 @@ public class ArticleService {
         }
 
         article.update(
-            request.getTitleOrNull(),
-            request.getDescriptionOrNull(),
-            request.getBodyOrNull()
+                request.getTitleOrNull(),
+                request.getDescriptionOrNull(),
+                request.getBodyOrNull()
         );
-        
+
         return Optional.of(article);
     }
 
@@ -129,5 +129,13 @@ public class ArticleService {
         }
 
         articleRepository.delete(article);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Article> getFeed(Long userId, Pageable pageable) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RealWorldException("User not found"));
+
+        return articleRepository.findByAuthorInOrderByCreatedAtDesc(user.getFollowing(), pageable);
     }
 }

@@ -10,6 +10,7 @@ import com.imap143.realworld.security.CustomUserDetails;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Pageable;
@@ -33,9 +34,9 @@ public class ArticleRestController {
             @RequestParam(required = false) String favorited,
             @RequestParam(defaultValue = "20") int limit,
             @RequestParam(defaultValue = "0") int offset) {
-        
+
         Pageable pageable = PageRequest.of(offset/limit, limit);
-        
+
         if (tag != null) {
             return MultiArticleResponseDTO.of(articleService.findByTag(tag, pageable));
         }
@@ -45,8 +46,21 @@ public class ArticleRestController {
         if (favorited != null) {
             return MultiArticleResponseDTO.of(articleService.findByFavorited(favorited, pageable));
         }
-        
+
         return MultiArticleResponseDTO.of(articleService.findAll(pageable));
+    }
+
+    @GetMapping(value = "/feed")
+    @PreAuthorize("isAuthenticated()")
+    public MultiArticleResponseDTO getFeed(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(defaultValue = "20") int limit,
+            @RequestParam(defaultValue = "0") int offset) {
+
+        Pageable pageable = PageRequest.of(offset/limit, limit);
+        return MultiArticleResponseDTO.of(
+                articleService.getFeed(userDetails.getId(), pageable)
+        );
     }
 
     @PostMapping(value = "/articles")
@@ -67,7 +81,7 @@ public class ArticleRestController {
             @PathVariable String slug,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody ArticleUpdateRequestDTO request) {
-        
+
         return articleService.update(slug, userDetails.getId(), request)
                 .map(article -> ResponseEntity.ok(new SingleArticleResponseDTO(article, article.getAuthor().getProfile())))
                 .orElseGet(() -> ResponseEntity.notFound().build());

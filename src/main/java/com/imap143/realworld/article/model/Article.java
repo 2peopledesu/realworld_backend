@@ -46,9 +46,9 @@ public class Article {
 
     @ManyToMany
     @JoinTable(
-        name = "article_favorites",
-        joinColumns = @JoinColumn(name = "article_id"),
-        inverseJoinColumns = @JoinColumn(name = "user_id")
+            name = "article_favorites",
+            joinColumns = @JoinColumn(name = "article_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private Set<User> favoritedBy = new HashSet<>();
 
@@ -73,17 +73,17 @@ public class Article {
     public void update(String title, String description, String body) {
         if (title != null || description != null || body != null) {
             this.content = new ArticleContent(
-                title != null ? title : this.content.getTitle(),
-                description != null ? description : this.content.getDescription(),
-                body != null ? body : this.content.getBody(),
-                this.content.getTags()
+                    title != null ? title : this.content.getTitle(),
+                    description != null ? description : this.content.getDescription(),
+                    body != null ? body : this.content.getBody(),
+                    this.content.getTags()
             );
             if (title != null) {
                 this.slug = generateSlug();
             }
         }
     }
-    
+
     public void addComment(Comment comment) {
         comments.add(comment);
     }

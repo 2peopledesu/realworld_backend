@@ -35,7 +35,7 @@ public class ArticleResponseDTO {
                 .collect(Collectors.toSet());
         this.createdAt = article.getCreatedAt();
         this.updatedAt = article.getUpdatedAt();
-        this.favorited = currentUserId != null && 
+        this.favorited = currentUserId != null &&
                 article.getFavoritedBy().stream()
                         .anyMatch(user -> user.getId() == currentUserId);
         this.favoritesCount = article.getFavoritesCount();
