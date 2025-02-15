@@ -34,9 +34,9 @@ public class ArticleRestController {
             @RequestParam(required = false) String favorited,
             @RequestParam(defaultValue = "20") int limit,
             @RequestParam(defaultValue = "0") int offset) {
-        
+
         Pageable pageable = PageRequest.of(offset/limit, limit);
-        
+
         if (tag != null) {
             return MultiArticleResponseDTO.of(articleService.findByTag(tag, pageable));
         }
@@ -46,7 +46,7 @@ public class ArticleRestController {
         if (favorited != null) {
             return MultiArticleResponseDTO.of(articleService.findByFavorited(favorited, pageable));
         }
-        
+
         return MultiArticleResponseDTO.of(articleService.findAll(pageable));
     }
 
@@ -80,7 +80,7 @@ public class ArticleRestController {
             @PathVariable String slug,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody ArticleUpdateRequestDTO request) {
-        
+
         return articleService.update(slug, userDetails.getId(), request)
                 .map(article -> ResponseEntity.ok(new SingleArticleResponseDTO(article, article.getAuthor().getProfile())))
                 .orElseGet(() -> ResponseEntity.notFound().build());

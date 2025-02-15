@@ -24,7 +24,7 @@ public class MultiArticle {
                         article,
                         article.getAuthor().getProfile()))
                 .collect(Collectors.toList());
-        
+
         return new MultiArticle(articles, (int) articlePage.getTotalElements());
     }
 }

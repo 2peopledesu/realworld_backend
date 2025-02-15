@@ -30,7 +30,7 @@ class ArticleServiceTest {
     private UserService userService;
 
     @Mock
-    private TagRepository tagRepository;  // TagRepository Mock 추가
+    private TagRepository tagRepository;
 
     @Mock
     private ArticleRepository articleRepository;
@@ -59,7 +59,7 @@ class ArticleServiceTest {
         Article expectedArticle = new Article(author, content);
         
         given(userService.findById(authorId)).willReturn(Optional.of(author));
-        given(tagRepository.findByTagName(tag.getTagName())).willReturn(Optional.of(tag));  // TagRepository mock 동작 추가
+        given(tagRepository.findByTagName(tag.getTagName())).willReturn(Optional.of(tag));
         given(articleRepository.save(any(Article.class))).willReturn(expectedArticle);
 
         // When

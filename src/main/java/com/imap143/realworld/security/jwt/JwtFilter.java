@@ -25,17 +25,17 @@ public class JwtFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
         String method = request.getMethod();
-        return method.equals("GET") && 
-            (path.startsWith("/articles/") || 
-                path.equals("/articles") || 
-                path.startsWith("/profiles/") || 
-                path.startsWith("/tags/"));
+        return method.equals("GET") &&
+                (path.startsWith("/articles/") ||
+                        path.equals("/articles") ||
+                        path.startsWith("/profiles/") ||
+                        path.startsWith("/tags/"));
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-            
+
         String jwt = resolveToken(request);
         log.info("Processing request: {} {}", request.getMethod(), request.getRequestURI());
 

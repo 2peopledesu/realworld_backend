@@ -23,7 +23,7 @@ public class MultiArticleResponseDTO {
                         article,
                         article.getAuthor().getProfile()))
                 .collect(Collectors.toList());
-        
+
         return new MultiArticleResponseDTO(articles);
     }
-} 
+}
