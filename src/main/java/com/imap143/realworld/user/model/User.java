@@ -1,6 +1,5 @@
 package com.imap143.realworld.user.model;
 
-import com.imap143.realworld.article.model.Article;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,38 +10,45 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "users", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"email"}),
-    @UniqueConstraint(columnNames = {"username"})
-})
+@Table(name = "users", 
+    uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"email"}),
+        @UniqueConstraint(columnNames = {"username"})
+    },
+    indexes = {
+        @Index(name = "idx_user_email", columnList = "email"),
+        @Index(name = "idx_user_username", columnList = "username")
+    }
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User {
 
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @Getter
-    @Column(name = "email", unique = true, nullable = false)
+    @Column(unique = true, nullable = false)
     private String email;
+
     @Embedded
     private Password password;
 
     @Embedded
     private Profile profile;
 
-    @JoinTable(name = "user_followers",
-            joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "follower_id", referencedColumnName = "id"))
-    @OneToMany
-    private Set<User> followers = new HashSet<>();
-
     @ManyToMany
-    @JoinTable(name = "user_favorites",
-            joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "article_id", referencedColumnName = "id"))
-    private Set<Article> favoritedArticles = new HashSet<>();
+    @JoinTable(
+        name = "user_follows",
+        joinColumns = @JoinColumn(name = "follower_id"),
+        inverseJoinColumns = @JoinColumn(name = "followed_id"),
+        foreignKey = @ForeignKey(name = "fk_user_follower"),
+        inverseForeignKey = @ForeignKey(name = "fk_user_followed")
+    )
+    private final Set<User> following = new HashSet<>();
+
+    @ManyToMany(mappedBy = "following")
+    private final Set<User> followers = new HashSet<>();
 
     // Existing user login
     public static User of(String email, String username, Password password) {
@@ -96,15 +102,12 @@ public class User {
         this.profile.setImage(image);
     }
 
-    public Article addFavorite(Article article) {
-        favoritedArticles.add(article);
-        return article.addFavorite(this);
+    public Set<User> getFollowers() {
+        return followers;
     }
 
-    public Article removeFavorite(Article article) {
-        favoritedArticles.remove(article);
-        return article.removeFavorite(this);
+    public Set<User> getFollowing() {
+        return following;
     }
-    
 }
 

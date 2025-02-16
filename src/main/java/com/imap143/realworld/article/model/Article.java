@@ -1,16 +1,23 @@
 package com.imap143.realworld.article.model;
 
 import com.imap143.realworld.user.model.User;
+import com.imap143.realworld.tag.model.Tag;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AccessLevel;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-@Table(name = "articles")
+@Table(name = "articles",
+    indexes = {
+        @Index(name = "idx_article_slug", columnList = "slug")
+    }
+)
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -20,8 +27,12 @@ public class Article {
     @Id
     private long id;
 
-    @JoinColumn(name = "author_id", referencedColumnName = "id", nullable = false)
     @ManyToOne
+    @JoinColumn(
+        name = "author_id", 
+        nullable = false,
+        foreignKey = @ForeignKey(name = "fk_article_author")
+    )
     private User author;
 
     @Embedded
@@ -32,6 +43,20 @@ public class Article {
         this.content = content;
     }
 
+    @OneToMany(mappedBy = "article", cascade = CascadeType.ALL, orphanRemoval = true)
+    private final Set<Comment> comments = new HashSet<>();
+
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+        name = "article_favorites",
+        joinColumns = @JoinColumn(name = "article_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id"),
+        foreignKey = @ForeignKey(name = "fk_article_favorites"),
+        inverseForeignKey = @ForeignKey(name = "fk_user_favorites")
+    )
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Set<User> favoritedBy = new HashSet<>();
+
     @Column(unique = true)
     private String slug;
 
@@ -41,16 +66,15 @@ public class Article {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "article", cascade = CascadeType.ALL)
-    private final Set<Comment> comments = new HashSet<>();
-
-    @ManyToMany
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
-        name = "article_favorites",
+        name = "article_tags",
         joinColumns = @JoinColumn(name = "article_id"),
-        inverseJoinColumns = @JoinColumn(name = "user_id")
+        inverseJoinColumns = @JoinColumn(name = "tag_id"),
+        foreignKey = @ForeignKey(name = "fk_article_tags"),
+        inverseForeignKey = @ForeignKey(name = "fk_tag_articles")
     )
-    private Set<User> favoritedBy = new HashSet<>();
+    private Set<Tag> tags = new HashSet<>();
 
     @PrePersist
     protected void onCreate() {

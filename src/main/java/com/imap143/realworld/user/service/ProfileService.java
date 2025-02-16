@@ -32,14 +32,16 @@ public class ProfileService {
         
         User userToFollow = userService.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User to follow not found"));
-
-        if (currentUser.getId() != userToFollow.getId()) {
-            Profile profile = userToFollow.getProfile();
-            profile.setFollowing(true);
-            return profile;
+    
+        if (currentUser.getId() == userToFollow.getId()) {
+            throw new RealWorldException("Users cannot follow themselves");
         }
+    
+        currentUser.getFollowing().add(userToFollow);
+        Profile profile = userToFollow.getProfile();
+        profile.setFollowing(true);
         
-        throw new RealWorldException("Users cannot follow themselves");
+        return profile;
     }
 
     @Transactional
@@ -51,6 +53,7 @@ public class ProfileService {
                 .orElseThrow(() -> new ResourceNotFoundException("User to unfollow not found"));
 
         if (currentUser.getId() != userToUnfollow.getId()) {
+            currentUser.getFollowing().remove(userToUnfollow);
             Profile profile = userToUnfollow.getProfile();
             profile.setFollowing(false);
             return profile;

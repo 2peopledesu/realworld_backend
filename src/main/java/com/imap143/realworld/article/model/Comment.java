@@ -18,12 +18,20 @@ public class Comment {
     @Id
     private Long id;
 
-    @JoinColumn(name = "article_id", referencedColumnName = "id", nullable = false)
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+        name = "article_id", 
+        nullable = false,
+        foreignKey = @ForeignKey(name = "fk_comment_article")
+    )
     private Article article;
 
-    @JoinColumn(name = "author_id", referencedColumnName = "id", nullable = false)
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+        name = "author_id", 
+        nullable = false,
+        foreignKey = @ForeignKey(name = "fk_comment_author")
+    )
     private User author;
 
     @Column(name = "created_at", nullable = false)

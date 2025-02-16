@@ -2,6 +2,7 @@ package com.imap143.realworld.user.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,35 +20,29 @@ public class Profile {
     @Column(name = "image")
     private String image; // address
 
+    @Transient
     private boolean following;
 
     public Profile(String username) {
-        this(username, null, null, false);
+        this(username, null, null);
     }
 
-    protected Profile() {}
+    protected Profile() {
+    }
 
-    private Profile(String username, String bio, String image, boolean following) {
+    private Profile(String username, String bio, String image) {
         this.username = username;
         this.bio = bio;
         this.image = image;
-        this.following = following;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getBio() {
-        return bio;
-    }
-
-    public String getImage() {
-        return image;
+        this.following = false;
     }
 
     public boolean isFollowing() {
         return following;
+    }
+
+    public void setFollowing(boolean following) {
+        this.following = following;
     }
 
     public void setUsername(String username) {
@@ -56,8 +51,7 @@ public class Profile {
         }
     }
 
-    public void setFollowing(boolean following) {
-        this.following = following;
+    public static Profile of(String username, String bio, String image) {
+        return new Profile(username, bio, image);
     }
-
 }
