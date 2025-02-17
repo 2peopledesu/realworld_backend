@@ -43,9 +43,9 @@ The API specification is no longer provided. I will create and upload the specif
 - JWT Authentication
 - User CRUD operations
 - Article CRUD operations
-- Comment CRUD operations
+- Comment CRD operations
 - Favorite Articles
-- Follow Users
+- Follow, UnFollow Users
 - Tag support
 - Input validation
 - Pagination
@@ -56,7 +56,7 @@ The API specification is no longer provided. I will create and upload the specif
 - Spring Data JPA
 - H2 Database (for development)
 - JWT Authentication
-- Maven
+- Gradle
 - JUnit 5
 - Lombok
 
