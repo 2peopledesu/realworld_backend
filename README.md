@@ -36,6 +36,9 @@ The API specification is no longer provided. I will create and upload the specif
 ### User Domain
 ![User Domain Model](/doc/image/user.png)
 
+
+![Article Domain Model](/doc/image/article.png)
+
 ## Features
 - JWT Authentication
 - User CRUD operations
